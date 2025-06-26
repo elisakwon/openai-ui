@@ -23,7 +23,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
 )
 
-folder_name = "UPLOAD_FOLDER"  # Change to a valid directory
+folder_name = "UPLOAD_FOLDER"  # Create valid directory 
 #os.mkdir(UPLOAD_FOLDER, exist_ok=True)
 #app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
