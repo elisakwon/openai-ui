@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Comment Generator</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #paste-area {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Provide inspiration for my design idea</h1>
+    
+    <form id="comment-form" enctype="multipart/form-data">
+        <label for="prompt">Describe your design idea below:</label><br>
+        <input type="text" id="prompt" name="prompt" placeholder="Enter description here" required><br><br>
+        
+        <label for="image">Upload Screenshot (or Paste Below):</label><br>
+        <input type="file" id="image" name="image" accept="image/*" style="display: none;"><br>
+
+        <div id="paste-area">Paste Image Here (Ctrl + V). For screenshot, use Win + Shift +S.</div><br>
+
+        <button type="submit">Submit</button>
+    </form>
+    
+    <div id="response-message"></div>
+
+    <script>
+        $(document).ready(function(){
+            var pastedImage = null;
+
+            // Handle paste event
+            $(document).on('paste', function(event) {
+                var items = (event.originalEvent.clipboardData || event.clipboardData).items;
+                for (var index in items) {
+                    var item = items[index];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        var blob = item.getAsFile();
+                        pastedImage = blob;
+                        $('#paste-area').text("Image pasted successfully!");
+                    }
+                }
+            });
+
+            // Handle form submission
+            $('#comment-form').submit(function(event){
+                event.preventDefault();
+                var formData = new FormData();
+                formData.append('prompt', $('#prompt').val());
+
+                // Use pasted image if available, otherwise use file input
+                var fileInput = $('#image')[0].files[0];
+                if (pastedImage) {
+                    formData.append('image', pastedImage);
+                } else if (fileInput) {
+                    formData.append('image', fileInput);
+                } else {
+                    alert("Please upload or paste an image.");
+                    return;
+                }
+
+                // Send the data via AJAX
+                $.ajax({
+                    type: 'POST',
+                    url: '/process-comment',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        $('#response-message').html('<p>' + response.ai_response + '</p>');
+
+                        // Reset the text field and image upload area after submission
+                        $('#prompt').val('');  // Clear the text input
+                        $('#image').val('');    // Clear the file input
+                        $('#paste-area').text('Paste Image Here (Ctrl + V). For screenshot, use Win + Shift +S.');  // Reset the paste area text
+                    },
+                    error: function(xhr) {
+                        $('#response-message').html('<p style="color:red;">' + xhr.responseJSON.error + '</p>');
+                    }
+                });
+            });
+
+            // Open file picker when clicking the paste area
+            $('#paste-area').click(function() {
+                $('#image').click();
+            });
+
+            // Display message when file is selected
+            $('#image').change(function() {
+                if (this.files.length > 0) {
+                    $('#paste-area').text("Image selected: " + this.files[0].name);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
